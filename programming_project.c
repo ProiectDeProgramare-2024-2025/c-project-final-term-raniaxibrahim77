@@ -15,9 +15,6 @@
 #define COLOR_NAVY "\x1B[38;5;17m"
 #define BOLD "\x1B[1m"
 
-
-
-
 #define MAX_MATCHES 100
 #define MAX_PLAYERS 50
 #define MAX_SCORE 21
@@ -169,28 +166,33 @@ void addMatch() {
         return;
     }
 
-    printf("Match Date (dd/mm/yyyy): ");
-    scanf("%10s", matches[matchCount].date);
-    while (getchar() != '\n');  // Flush newline ✅
-
-    printf("Player 1 full name (max 49 characters): ");
-    fgets(matches[matchCount].player2, sizeof(matches[matchCount].player2), stdin);
-    matches[matchCount].player2[strcspn(matches[matchCount].player2, "\n")] = 0;
+    do {
+        printf("Match Date (dd/mm/yyyy): ");
+        scanf("%10s", matches[matchCount].date);
+        if (strlen(matches[matchCount].date) != 10 || matches[matchCount].date[2] != '/' || matches[matchCount].date[5] != '/') {
+            printf(COLOR_RED "Invalid date format. Use dd/mm/yyyy with no spaces.\n" COLOR_RESET);
+            while (getchar() != '\n');
+        } else {
+            break;
+        }
+    } while (1);
     while (getchar() != '\n');
 
+    printf("Player 1 full name (max 49 characters): ");
+    fgets(matches[matchCount].player1, sizeof(matches[matchCount].player1), stdin);
+    matches[matchCount].player1[strcspn(matches[matchCount].player1, "\n")] = 0;
 
     matches[matchCount].score1 = getValidScore("Player 1 score (0-21): ");
+    while (getchar() != '\n');
 
     printf("Player 2 full name (max 49 characters): ");
     fgets(matches[matchCount].player2, sizeof(matches[matchCount].player2), stdin);
-    matches[matchCount].player2[strcspn(matches[matchCount].player2, "\n")] = 0;  // clean newline
-
-    while (getchar() != '\n');
+    matches[matchCount].player2[strcspn(matches[matchCount].player2, "\n")] = 0;
 
     matches[matchCount].score2 = getValidScore("Player 2 score (0-21): ");
+    while (getchar() != '\n');
 
-
-    if (!isValidName(matches[matchCount].player2)) {
+    if (!isValidName(matches[matchCount].player1) || !isValidName(matches[matchCount].player2)) {
         printf(COLOR_RED "Invalid name. Use letters only.\n" COLOR_RESET);
         return;
     }
@@ -220,9 +222,7 @@ void addMatch() {
     getchar();
 }
 
-
 void showRanking() {
-
     if (playerCount == 0) {
         printf("No players recorded yet.\n");
         printf("\nPress Enter to return...");
@@ -266,10 +266,7 @@ void showRanking() {
     getchar();
 }
 
-
-
 void showPlayerHistory() {
-
     if (playerCount == 0) {
         printf(COLOR_RED "No players recorded yet.\n" COLOR_RESET);
         printf("\nPress Enter to return...");
@@ -282,7 +279,6 @@ void showPlayerHistory() {
     fgets(name, sizeof(name), stdin);
     name[strcspn(name, "\n")] = '\0';
 
-    // Normalize input to lowercase
     for (int i = 0; name[i]; i++) {
         name[i] = tolower(name[i]);
     }
@@ -294,7 +290,6 @@ void showPlayerHistory() {
         for (int j = 0; storedName[j]; j++) {
             storedName[j] = tolower(storedName[j]);
         }
-
         if (strcmp(storedName, name) == 0) {
             playerIndex = i;
             break;
@@ -322,7 +317,7 @@ void showPlayerHistory() {
 
             int isP1Winner = matches[i].score1 > matches[i].score2;
 
-            printf("- %s %s%d%s vs %s %s%d%s\n",
+            printf("- %s %s%d%s vs %s %s%d%s " COLOR_GRAY "(%s)" COLOR_RESET "\n",
                    matches[i].player1,
                    isP1Winner ? COLOR_PINK : COLOR_GRAY,
                    matches[i].score1,
@@ -330,7 +325,8 @@ void showPlayerHistory() {
                    matches[i].player2,
                    isP1Winner ? COLOR_GRAY : COLOR_PINK,
                    matches[i].score2,
-                   COLOR_RESET);
+                   COLOR_RESET,
+                   matches[i].date);
 
             matchFound = 1;
         }
@@ -352,8 +348,6 @@ void exitProgram() {
     printf("Goodbye!\n\n");
     exit(0);
 }
-
-
 
 int main() {
     loadData();
@@ -382,9 +376,9 @@ int main() {
         while (getchar() != '\n');
 
         switch (option) {
-                case 1:
-                    clearScreen();
-                    printf(COLOR_NAVY BOLD "~~~~~~~~ Add Match ~~~~~~~~\n" COLOR_RESET);
+            case 1:
+                clearScreen();
+                printf(COLOR_NAVY BOLD "~~~~~~~~ Add Match ~~~~~~~~\n" COLOR_RESET);
                 addMatch();
                 break;
 
@@ -400,15 +394,16 @@ int main() {
                 showPlayerHistory();
                 break;
 
-            case 0: exitProgram(); break;
-                default:
-                    printf(COLOR_RED"\nInvalid option! Please try again.\n"COLOR_RESET);
-                    printf("\nPress Enter to continue...");
-                    getchar();
+            case 0:
+                exitProgram();
+                break;
+
+            default:
+                printf(COLOR_RED"\nInvalid option! Please try again.\n"COLOR_RESET);
+                printf("\nPress Enter to continue...");
+                getchar();
         }
     } while (1);
 
     return 0;
 }
-
-
